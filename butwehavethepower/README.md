@@ -2,6 +2,6 @@ Caelyn Dvoey
 Lab 5 - Comp 20
 README
 
-1. Identify what aspects of the work have been correctly implemented and what have not.
-2. Identify anyone with whom you have collaborated or discussed the assignment.
-3. Say approximately how many hours you have spent completing the assignment.
+1. All aspects have been completed
+2. No collaborators besides Piazza questions
+3. Spend appx. 2 hours on this assignment.
