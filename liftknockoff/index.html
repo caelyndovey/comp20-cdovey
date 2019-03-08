@@ -1,60 +1,60 @@
 <!DOCTYPE html>
 <html>
+
     <head>
-        <meta charset="utf-8" />
-        <title>Lift Knockoff</title>
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <title>Simple Map</title>
+        <meta name="viewport" content="initial-scale=1.0">
         <link rel="stylesheet" href="style.css" type="text/css" />
+        <meta charset="utf-8">
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9sQaGQMUn1TEZG3C11LjRlpQAppS4WGk&callback=initMap"
+        async defer></script>
 
         <script>
-        var myLat = 0;
-        var myLng = 0;
+            var map;
+            var myLat = 0;
+            var myLng = 0;
 
-        // called on page load
-        function init(){
-            getLocation();
-        }
-
-        // get user current location and update LAT and LNG values
-        function getLocation() {
-            console.log("Inside getLocation...");
-            navigator.geolocation.getCurrentPosition(function(position) {
-                console.log("Inside callback for getCurrentPosition...");
-
-                myLat = position.coords.latitude;
-                myLng = position.coords.longitude;
-                getRides();
-            });
-            console.log("Leaving getLocation...");
-
-        }
-
-        // retrieve available drivers/passengers
-        function getRides() {
-            var request = new XMLHttpRequest();
-            var url = 'https://hans-moleman.herokuapp.com/rides';
-            var params = 'username=FQ4DubnJ&lat='+myLat+'&lng='+myLng;
-            request.open('POST', url, true);
-            request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-            request.onreadystatechange = function() {
-                if (request.readyState == 4 && request.status == 200) {
-                    rideRequests = JSON.parse(request.responseText);
-                    console.log(rideRequests);
-                    for (count = 0; count < 0;  count++) {
-                        console.log(rideRequests[count].username);
-                    }
-                }
+            function init() {
+                getLocation();
             }
-            request.send(params); 
-        }
-       
+
+            function getLocation() {
+                navigator.geolocation.getCurrentPosition(function(position) { 
+                    myLat = position.coords.latitude;
+                    myLng = position.coords.longitude;
+                    // myLat = 42.418560 
+                    // myLng = -71.106453 
+                    initMap();
+                    getRides();
+                });
+            }
+
+            function initMap() {
+                map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: myLat, lng: myLng},
+                zoom: 8 });
+            }
+
+            function getRides() {
+                var request = new XMLHttpRequest();
+                var url = 'https://hans-moleman.herokuapp.com/rides';
+                var params = 'username=FQ4DubnJ&lat='+myLat+'&lng='+myLng;
+                request.open('POST', url, true);
+                request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                request.onreadystatechange = function() {
+                    if (request.readyState == 4 && request.status == 200) {
+                        rideRequests = JSON.parse(request.responseText);
+                        console.log(rideRequests);               
+                        }
+                }
+                request.send(params); 
+            }
         
         </script>
-
     </head>
-    
-    <body onload="init()">
 
+    <body onload="init()">
+        <div id="map"></div>
     </body>
 
-</html> 
+</html>
