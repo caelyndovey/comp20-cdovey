@@ -6,7 +6,7 @@
         <meta name="viewport" content="initial-scale=1.0">
         <link rel="stylesheet" href="style.css" type="text/css" />
         <meta charset="utf-8">
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9sQaGQMUn1TEZG3C11LjRlpQAppS4WGk"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9sQaGQMUn1TEZG3C11LjRlpQAppS4WGk&libraries=geometry"></script>
 
         <script>
             var map;
@@ -31,6 +31,7 @@
             var marker;
             var infowindow = new google.maps.InfoWindow();
 
+
             function init() {
                 getLocation();
             }
@@ -39,8 +40,6 @@
                 navigator.geolocation.getCurrentPosition(function(position) { 
                     myLat = position.coords.latitude;
                     myLng = position.coords.longitude;
-                    // myLat = 42.418560 
-                    // myLng = -71.106453 
                     initMap();
                 });
             }
@@ -51,17 +50,6 @@
                 center: {lat: myLat, lng: myLng},
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 zoom: 8 });
-                marker = new google.maps.Marker({
-                    position: me,
-                    icon: myIcon,
-                    title: "my username here"
-                });
-                marker.setMap(map);
-
-                google.maps.event.addListener(marker, 'click', function() {
-                    infowindow.setContent(marker.title);
-                    infowindow.open(map, marker);
-                });
                 getRides();
             }
 
@@ -80,36 +68,109 @@
                             placeVehicles();
                         else
                             placePassengers();
+
+                        placeMe();
                     }
                 }
                 request.send(params); 
             }
 
+            function placeMe() {
+                weinerExists = false;
+                weinerDistance = Infinity;
+                closest = Infinity;
+                for (i = 0; i < (Object.values(rideRequests)[0].length); i++) {
+                    if (Object.values(rideRequests)[0][i].username == "WEINERMOBILE") {
+                        weinerExists = true;
+                        weinerLat = Object.values(rideRequests)[0][i].lat;
+                        weinerLng = Object.values(rideRequests)[0][i].lng;
+                        latLngA = new google.maps.LatLng(myLat, myLng);
+                        latLngB = new google.maps.LatLng(weinerLat, weinerLng);
+                        weinerDistance = 0.000621371 * (google.maps.geometry.spherical.computeDistanceBetween(latLngA, latLngB));
+                    }
+                    else {
+                        closestLat = Object.values(rideRequests)[0][i].lat;
+                        closestLng = Object.values(rideRequests)[0][i].lng;
+                        latLngA = new google.maps.LatLng(myLat, myLng);
+                        latLngB = new google.maps.LatLng(closestLat, closestLng);
+                        currentClosest = 0.000621371 * (google.maps.geometry.spherical.computeDistanceBetween(latLngA, latLngB));
+                        if (currentClosest < closest)
+                            closest = currentClosest;
+                    }
+                }
+                var marker_content;
+                if (weinerExists)
+                    marker_content = "Username: FQ4DubnJ | Weinermobile: "+weinerDistance+" miles away | Passenger/Driver: "+closest+ " miles away";
+                if (weinerExists == false)
+                    marker_content = "Username: FQ4DubnJ \n Passenger/Driver: "+closest+ " miles away | The Weinermobile is nowhere to be seen!";
+
+                marker = new google.maps.Marker({
+                    position: me,
+                    icon: myIcon,
+                    title: marker_content
+                });
+                marker.setMap(map);
+
+                google.maps.event.addListener(marker, 'click', function() {
+                    infowindow.setContent(marker.title);
+                    infowindow.open(map, marker);
+                });
+            }
+
             function placeVehicles() {
+                var markers = [];
                 var cur_icon = driverIcon;
                 for (i = 0; i < (rideRequests.vehicles.length); i++) {
                     if (rideRequests.vehicles[i].username == "WEINERMOBILE")
                         cur_icon = weinermobileIcon;
-                    marker = new google.maps.Marker ({
+
+                    carLat = Object.values(rideRequests)[0][i].lat;
+                    carLng = Object.values(rideRequests)[0][i].lng;
+                    latLngA = new google.maps.LatLng(myLat, myLng);
+                    latLngB = new google.maps.LatLng(carLat, carLng);
+                    myDistance = 0.000621371 * (google.maps.geometry.spherical.computeDistanceBetween(latLngB, latLngA));
+
+                    marker_content = "Username: " + rideRequests.vehicles[i].username + " | Distance away: "+ myDistance;
+
+                    markers.push(new google.maps.Marker ({
                         position: new google.maps.LatLng(rideRequests.vehicles[i].lat, rideRequests.vehicles[i].lng),
                         icon: cur_icon,
-                        title: "my username here"
-                        });
-                    marker.setMap(map);
+                        title: marker_content
+                        }));
+                    markers[i].index = i;
+                    markers[i].setMap(map);
+
+                    google.maps.event.addListener(markers[i], 'click', function() {
+                        infowindow.setContent(markers[this.index].title);
+                        infowindow.open(map, markers[this.index]);
+                    });
                 }
             }
 
             function placePassengers() {
+                var markers = [];
                 for (i = 0; i < (rideRequests.passengers.length); i++) {
-                    marker = new google.maps.Marker ({
-                        position: new google.maps.LatLng(rideRequests.passengers[i].lat, 
-                                  rideRequests.passengers[i].lng),
-                        icon: passengerIcon,
-                        title: "my username here"
-                        });
-                    marker.setMap(map);
-                }
+                    carLat = Object.values(rideRequests)[0][i].lat;
+                    carLng = Object.values(rideRequests)[0][i].lng;
+                    latLngA = new google.maps.LatLng(myLat, myLng);
+                    latLngB = new google.maps.LatLng(carLat, carLng);
+                    myDistance = 0.000621371 * (google.maps.geometry.spherical.computeDistanceBetween(latLngB, latLngA));
 
+                    marker_content = "Username: " + rideRequests.vehicles[i].username + " | Distance away: "+ myDistance;
+
+                    markers.push(new google.maps.Marker ({
+                        position: new google.maps.LatLng(rideRequests.vehicles[i].lat, rideRequests.vehicles[i].lng),
+                        icon: cur_icon,
+                        title: marker_content
+                        }));
+                    markers[i].index = i;
+                    markers[i].setMap(map);
+
+                    google.maps.event.addListener(markers[i], 'click', function() {
+                        infowindow.setContent(markers[this.index].title);
+                        infowindow.open(map, markers[this.index]);
+                    });
+                }
 
             }
         
