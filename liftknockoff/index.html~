@@ -55,7 +55,7 @@
 
             function getRides() {
                 var request = new XMLHttpRequest();
-                var url = 'https://mysterious-dawn-83421.herokuapp.com/rides';
+                var url = 'https://hans-moleman.herokuapp.com/rides';
                 var params = 'username=FQ4DubnJ&lat='+myLat+'&lng='+myLng;
         
                 request.open('POST', url, true);
