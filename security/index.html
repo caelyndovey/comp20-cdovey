@@ -1,19 +1,91 @@
-1.  Introduction
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title> Assignment 4 </title>
+    </head>
 
-2. Methodology - burpsuite repeater, interception, used lists of XSS payloads,OWASP ZAP
-
-3. Abstract of Findings - was not able to find XSS vulnerabilities in her server
-
-4. Issues Found:
-
-    -> Issue:
-    -> Location:
-    -> Severity:
-    -> Description:
-    -> Proof:
-    -> Resolution:  
-
-5. Conclusion 
-6. References: Burp Suite Community Edition Website, Ming's scripted course notes, class notes, Piazza, 
-https://www.us-cert.gov/bsi/articles/best-practices/white-box-testing/white-box-testing
-https://github.com/Pgaijin66/XSS-Payloads/blob/master/payload.txt
+    <body>
+        <h2> Assignment 4: Caelyn Dovey </h2>
+        <ol>
+            <li><h4>Introduction</h4></li>
+            <p> This is a security assessment on a private car service web application. This
+                application allows a user to interact with various cars and/or passengers in 
+                their near vicinity to request a ride and/or pick up a passenger. The scope
+                of this assessment will cover both the client-side and server-side of this web 
+                app, with the objective of identifying potential security and privacy vulnerabilities. The results of my consultation are as follows. </p> 
+            <li><h4>Methodology</h4></li>
+            <p> I began my testing from a black-box perspective, before analyzing any of
+                the source code. I used both Burp Suite and OWASP Zap for this purpose. 
+                My findings were inconclusive: I began by looking for XXS vulnerabilities,
+                and did not find any. However, using ZAP I was able to find a vulnerability for "clickjacking", as described below. I moved to white box testing, which is how I most of the vulnerabilities below. I used Curl for NoSQL injection, and directly inserted probelmatic queries into the URLs.   </p>
+            <li><h4>Abstract of Findings</h4></li>
+            <p> Your web application is extemely vulnerable to an attack called NoSQL Injection. Specifically, attackers are able to see a full list of users in your database without permission to. This is a privacy issue and should be taken very seriously. Additionally, attackers could inject fake users into your system, that aren't actually meant to use the app. Finally, it is possible for an attacker to perform an attack on your web app that would hide malicious links under legitimate content, leaving users vulnerable to unknowingly clicking on these links.
+            </p>
+            <li><h4>Issues Found</h4></li>
+                <ol>
+                    <li>
+                        <ul> 
+                            <li> Issue: NoSQL Injection </li>
+                            <li> Location: https://secure-journey-64999.herokuapp.com/passenger.json </li>
+                            <li> Severity: High </li>
+                            <li> Description: By modifying the query value for the "username" parameter to username=[$gt]= (or another malicious string), an attacker is able to view activity of all passengers in the Mongo collection, when they should receive just an empty JSON due to 
+                            invalid username. </li>
+                            <li> Proof: <p> <img src="nosql1.png" width="900">
+                            </p> </li>
+                            <li> Resolution: I recommend using a data validation tool like Joi (https://github.com/hapijs/joi) which will allow you to 
+                            validate query parameters using constraints on the parameters, 
+                            for instance, you can define which characters are allowed in 
+                            a username, the length of the username, etc. If you would like to avoid using Joi, it is also possible to implement manual data validation, although this is a less sustainable solution. </li>
+                        </ul>
+                        <p> </p>
+                    </li>
+                    <li> <ul> 
+                            <li> Issue: NoSQL Injection </li>
+                            <li> Location: https://secure-journey-64999.herokuapp.com/rides </li>
+                            <li> Severity: Medium </li>
+                            <li> Description: An attack is able to insert a new user into the passenger db by using any random username as a parameter. This can lead to annoying (fake) ride request data, and could break the app. </li>
+                            <li> Proof: <p> <img src="nosql2.png" width="900"> </p> </li>
+                            <li> Resolution: I would recommend creating a collection that holds every valid username that has been registered to users of the app. Then, while validating input to the /rides API, you can first determine whether the username is actually valid using code like: <br><br>
+                            <code> db.users.find({username : usr}), function (err, docs) { <br>
+                                if (!docs.length) {
+                                <br>// handle unknown user<br>
+                            }}
+                            </code>
+                            </li> 
+                             </li> </li>
+                        </ul>
+                        <p> </p>
+                    <li> <ul> 
+                            <li> Issue: X-Frame-Options header not set </li>
+                            <li> Location: Client-side (index.html) </li>
+                            <li> Severity: Medium </li>
+                            <li> Description: This issue was found using ZAP, where I did a spider/exploit search of all pages on the client-side of the app. It makes your application vulnerable to "clickjacking", in which the attacker could trick a user into clicking on a malicious button or link that has been embedded into an opaque layer under the top level page. </li>
+                            <li> Proof: <p> <img src="xframe.png" width="900"> </p> </li>
+                            <li> Resolution: The simplest fix here would be to set this header as follows: <br>
+                            <code> res.setHeader('X-Frame-Options', 'sameorigin') </code> <br>
+                            This ensures that the page can be displayed in a frame ONLY if the site including the frame is the same as is serving the page. </li> </li>
+                        </ul>
+                </ol>
+            <li><h4>Conclusion</h4>
+                <p> Overall, we have identified three main issues in your web application that will leave the app vulnerable to attackers. Two involve NoSQL injection, and the third involves clickjacking. However, be advised that this search was not exhaustive: there could very well be more security and privacy issues than the three listed here. It is recommended that you add input validation tools to your code, as currently no input validation takes place. This can be done manually, or by using middleware such as Validator.js, koa-validate (which works on top of Validator.js), and Joi. All of these tools are free. </p></li>
+            <li><h4>References</h4></li>
+        </ol>
+            <ul> 
+                <li>Burp Suite Community Edition Website</li>
+                <li>Ming's scripted course notes</li>
+                <li>Piazza</li>
+                <li>https://www.us-cert.gov/bsi/articles/best-practices/white-box-testing/white-box-testing</li>
+                <li>https://github.com/Pgaijin66/XSS-Payloads/blob/master/payload.txt</li>
+                <li>https://blog.websecurify.com/2014/08/hacking-nodejs-and-mongodb.html</li>
+                <li>https://stackoverflow.com/questions/52151957/how-to-configure-burp-suite-community-v1-7-36-to-capture-both-http-and-https-tra?rq=1</li>
+                <li>https://github.com/cr0hn/nosqlinjection_wordlists</li>
+                <li>https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options</li>
+                <li>https://www.owasp.org/index.php/Clickjacking</li>
+                <li>https://blog.sqreen.com/prevent-nosql-injections-mongodb-node-js/</li>
+                <li>https://rethinkdb.com/blog/validation-techniques/</li>
+            </ul>
+    </body>
+</html>
