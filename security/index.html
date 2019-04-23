@@ -63,7 +63,7 @@
                             <li> Location: Client-side (index.html) </li>
                             <li> Severity: Medium </li>
                             <li> Description: This issue was found using ZAP, where I did a spider/exploit search of all pages on the client-side of the app. It makes your application vulnerable to "clickjacking", in which the attacker could trick a user into clicking on a malicious button or link that has been embedded into an opaque layer under the top level page. </li>
-                            <li> Proof: <p> <img src="xframe.png" width="900"> </p> </li>
+                            <li> Proof: In the source code, it is evident that the header has not been set. Feedback from ZAP: <p> <img src="xframe.png" width="900"> </p> </li>
                             <li> Resolution: The simplest fix here would be to set this header as follows: <br>
                             <code> res.setHeader('X-Frame-Options', 'sameorigin') </code> <br>
                             This ensures that the page can be displayed in a frame ONLY if the site including the frame is the same as is serving the page. </li> </li>
